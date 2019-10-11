@@ -1,5 +1,7 @@
 # Rooms To Go Engineering: Take Home Assignment
 
+## Please see under ` python/ ` for my solution and documentation.
+
 ## How we will run your program
 1. Clone your repository
 2. npm install (or pip install, if your language does not have a installer please provide a bash script called install.sh)
