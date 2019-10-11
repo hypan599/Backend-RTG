@@ -17,9 +17,11 @@ class Warehouse:  # warehouse with infinity capacity
 
     def remove_product(self, sku, quantity):
         if sku not in self.stock:
-            # print(sku, "not in warehouse")
+            print("ERROR UNSTOCKING PRODUCT WITH SKU %s NOT IN WAREHOUSE" % sku)
             return
         self.stock[sku] -= min(quantity, self.stock[sku])
+        if self.stock.get(sku, None) == 0:
+            self.stock.pop(sku)
 
     def list_product(self):
         return list(self.stock.items())
@@ -28,20 +30,23 @@ class Warehouse:  # warehouse with infinity capacity
 class WarehouseWithLimit:
     def __init__(self, warehouse_id, limit):
         self.warehouse_id = warehouse_id
-        self.limit = limit
+        self.limit = int(limit)
         self.stock = defaultdict(int)
         self.current_quantity = 0
 
     def add_product(self, sku, quantity):
         self.stock[sku] += min(self.limit - self.current_quantity, quantity)
-        self.current_quantity = min(self.current_quantity + quantity, self.limit)
+        self.current_quantity = min(
+            self.current_quantity + quantity, self.limit)
 
     def remove_product(self, sku, quantity):
         if sku not in self.stock:
-            # print(sku, "not in warehouse")
+            print("ERROR UNSTOCKING PRODUCT WITH SKU %s NOT IN WAREHOUSE" % sku)
             return
         self.stock[sku] -= min(quantity, self.stock[sku])
         self.current_quantity -= min(quantity, self.stock[sku])
+        if self.stock.get(sku, None) == 0:
+            self.stock.pop(sku)
 
     def list_product(self):
         return list(self.stock.items())
@@ -53,8 +58,12 @@ class Company:
         self.product_catalog = {}
 
     def add_warehouse(self, new_warehouse, limit=None):
+        if new_warehouse in self.warehouses:
+            print(
+                "ERROR ADDING WAREHOUSE WAREHOUSE with ID %s ALREADY EXISTS" % new_warehouse)
         if limit:
-            self.warehouses[new_warehouse] = WarehouseWithLimit(new_warehouse, limit)
+            self.warehouses[new_warehouse] = WarehouseWithLimit(
+                new_warehouse, limit)
         else:
             self.warehouses[new_warehouse] = Warehouse(new_warehouse)
 
@@ -99,7 +108,8 @@ class Company:
                     for sku, qty in self.warehouses[warehouse_id].list_product()]
         len_name = max([len(i) for i, _, _ in products])
         len_sku = len(products[0][1])
-        print("ITEM_NAME".ljust(len_name), "ITEM_SKU".ljust(len_sku), "QTY", sep="\t")
+        print("ITEM_NAME".ljust(len_name),
+              "ITEM_SKU".ljust(len_sku), "QTY", sep="\t")
         for name, sku, quantity in products:
             print(name.ljust(len_name), sku.ljust(len_sku), quantity, sep="\t")
 
@@ -128,6 +138,8 @@ def run_command(company, command):
 
 def main(log_file="log.txt"):
     company = Company()
+    print("""Welcome to warehose management system.
+To quit use Ctrl-D(*nix)/Ctrl-Z&Enter(Windows)""")
     with open(log_file, "w") as f:
         history = []
         while True:
@@ -135,14 +147,15 @@ def main(log_file="log.txt"):
                 command = input()
             except EOFError:
                 break
-            history.append(command + "\n")  # todo: asyncrously
+            if command == "" or command[0] == "#":
+                continue
+            history.append(command + "\n")
             if len(history) == 2:
                 f.write(history[0])
                 f.write(history[1])
                 history.clear()
-            print("running: ", command)
+            # print("running: ", command)
             run_command(company, command)
-            print()
 
 
 if __name__ == "__main__":
